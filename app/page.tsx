@@ -2,6 +2,7 @@
 
 import { useState, FormEvent, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Script from 'next/script';
 import {
   Calendar, Clock, Timer, Video, Mail, Phone, Building2, MapPin, User,
   GraduationCap, BookOpen, Sparkles, Clipboard, FolderOpen, Target,
@@ -9,6 +10,7 @@ import {
   Monitor, MessageSquare, Download, FolderKanban, Cloud, UserCheck, 
   Lightbulb, Layers, Zap
 } from 'lucide-react';
+import { createPaymentOrder, verifyPayment } from '@/lib/api';
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -23,6 +25,7 @@ export default function Home() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Matrix Rain Effect
@@ -82,33 +85,122 @@ export default function Home() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.phone || !formData.experience) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Check if Razorpay is loaded
+    if (!razorpayLoaded || typeof window.Razorpay === 'undefined') {
+      alert('Payment gateway is loading. Please try again in a moment.');
+      return;
+    }
+
     setIsSubmitting(true);
-    setShowConfetti(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      alert('🎉 Registration Successful!\n\nWelcome to AI for Teachers Workshop!\nCheck your email for workshop details and resources.');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        school: '',
-        city: '',
-        subject: '',
-        experience: ''
+      // Create payment order
+      const orderResponse = await createPaymentOrder({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        school: formData.school,
+        city: formData.city,
+        subject: formData.subject,
+        experience: formData.experience,
       });
+
+      if (!orderResponse.success || !orderResponse.data) {
+        throw new Error(orderResponse.message || 'Failed to create payment order');
+      }
+
+      const { razorpay_order_id, amount, currency, key_id, order_id } = orderResponse.data;
+
+      // Configure Razorpay options
+      const options: RazorpayOptions = {
+        key: key_id,
+        amount: amount,
+        currency: currency,
+        name: 'DexGuru AI Workshop',
+        description: 'AI for Teachers Workshop Registration',
+        order_id: razorpay_order_id,
+        handler: async function (response: RazorpayResponse) {
+          try {
+            // Verify payment
+            const verificationResponse = await verifyPayment({
+              order_id: order_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            if (verificationResponse.success) {
+              setShowConfetti(true);
+              alert('🎉 Payment Successful!\n\nWelcome to AI for Teachers Workshop!\nCheck your email for workshop details and resources.');
+              
+              // Reset form
+              setFormData({
+                name: '',
+                email: '',
+                phone: '',
+                school: '',
+                city: '',
+                subject: '',
+                experience: ''
+              });
+              
+              setTimeout(() => setShowConfetti(false), 3000);
+            } else {
+              alert('Payment verification failed. Please contact support.');
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            alert('Payment verification failed. Please contact support with your payment ID: ' + response.razorpay_payment_id);
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        prefill: {
+          name: formData.name,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#fbbf24',
+        },
+        modal: {
+          ondismiss: function () {
+            setIsSubmitting(false);
+            alert('Payment cancelled. Please try again when ready.');
+          },
+        },
+      };
+
+      // Open Razorpay payment modal
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+
     } catch (error) {
       console.error('Error:', error);
-      alert('Registration failed. Please try again.');
-    } finally {
+      alert(error instanceof Error ? error.message : 'Registration failed. Please try again.');
       setIsSubmitting(false);
-      setTimeout(() => setShowConfetti(false), 3000);
     }
   };
 
   return (
+    <>
+      {/* Razorpay Script */}
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        onLoad={() => setRazorpayLoaded(true)}
+        onError={() => {
+          console.error('Failed to load Razorpay script');
+          alert('Payment gateway failed to load. Please refresh the page.');
+        }}
+      />
+      
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
       {/* Matrix Rain Canvas */}
       <canvas
@@ -799,5 +891,6 @@ export default function Home() {
         </div>
       </div>
     </div>
+    </>
   );
 }
