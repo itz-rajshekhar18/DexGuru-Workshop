@@ -192,15 +192,12 @@ export default function Home() {
           <div className="relative z-20 text-center flex flex-col items-center mt-40">
             <div className="mb-8 relative">
               {/* Semi-Transparent Glowing Animated Frame - Yellow/Blue/Grey Theme */}
-              <div className="relative p-8 rounded-3xl bg-gradient-to-br from-yellow-500/5 via-blue-500/5 to-gray-500/5 border-2 border-yellow-400/30 shadow-2xl backdrop-blur-sm">
+              <div className="relative p-8 rounded-3xl bg-gradient-to-br from-yellow-500/5 via-blue-500/5 to-gray-500/5 border-2 border-yellow-400/30 shadow-2xl animate-glow-border">
                 {/* Corner Decorations - Mixed Colors */}
                 <div className="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-yellow-400/50 rounded-tl-2xl animate-pulse"></div>
                 <div className="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-blue-400/50 rounded-tr-2xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
                 <div className="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-blue-400/50 rounded-bl-2xl animate-pulse" style={{ animationDelay: '1s' }}></div>
                 <div className="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-yellow-400/50 rounded-br-2xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-                
-                {/* Glowing Border Effect - Subtle Multi-Color */}
-                <div className="absolute inset-0 rounded-3xl bg-gradient-to-r from-yellow-400/10 via-blue-400/10 to-gray-400/10 opacity-30 blur-xl animate-pulse"></div>
                 
                 {/* Side Accent Lines - Alternating Colors */}
                 <div className="absolute top-1/2 -left-2 w-4 h-16 -translate-y-1/2 bg-gradient-to-r from-yellow-400/40 to-transparent animate-pulse"></div>
