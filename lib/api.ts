@@ -9,6 +9,8 @@ export interface RegistrationData {
   city?: string;
   subject?: string;
   experience: string;
+  workshopSpot?: string;
+  amount?: number;
 }
 
 export interface PaymentOrderResponse {
@@ -39,6 +41,15 @@ export interface PaymentVerificationResponse {
 // Create payment order
 export async function createPaymentOrder(data: RegistrationData): Promise<PaymentOrderResponse> {
   try {
+    // Get workshop spot label for message
+    const spotLabels: Record<string, string> = {
+      'dexlabs': 'Dexlabs AI Skill Centre',
+      'school': 'In School',
+      'phoenix': 'Phoenix Palasios, PVR Inox Cinema'
+    };
+    
+    const workshopSpotLabel = data.workshopSpot ? spotLabels[data.workshopSpot] || data.workshopSpot : 'Not selected';
+    
     const response = await fetch(`${PAYMENT_API_URL}/create-order`, {
       method: 'POST',
       headers: {
@@ -51,7 +62,8 @@ export async function createPaymentOrder(data: RegistrationData): Promise<Paymen
         grade: data.school || 'Not specified',
         experience: data.experience,
         interests: [],
-        message: `School: ${data.school || 'N/A'}, City: ${data.city || 'N/A'}, Subject: ${data.subject || 'N/A'}`,
+        message: `School: ${data.school || 'N/A'}, City: ${data.city || 'N/A'}, Subject: ${data.subject || 'N/A'}, Workshop Spot: ${workshopSpotLabel}`,
+        amount: data.amount || 200000, // Default ₹2000 in paise if not provided
       }),
     });
 

@@ -20,8 +20,21 @@ export default function Home() {
     school: '',
     city: '',
     subject: '',
-    experience: ''
+    experience: '',
+    workshopSpot: ''
   });
+
+  // Workshop spot pricing for DexGuru (Teachers Workshop)
+  const workshopSpots = [
+    { id: 'dexlabs', label: 'In Dexlabs AI Skill Centre', price: 2000 },
+    { id: 'school', label: 'In School', price: 1500 },
+    { id: 'phoenix', label: 'In Phoenix Palasios, PVR Inox Cinema', price: 2500 }
+  ];
+
+  const getWorkshopPrice = () => {
+    const spot = workshopSpots.find(s => s.id === formData.workshopSpot);
+    return spot ? spot.price : 0;
+  };
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -110,6 +123,8 @@ export default function Home() {
         city: formData.city,
         subject: formData.subject,
         experience: formData.experience,
+        workshopSpot: formData.workshopSpot,
+        amount: getWorkshopPrice() * 100, // Amount in paise
       });
 
       if (!orderResponse.success || !orderResponse.data) {
@@ -148,7 +163,8 @@ export default function Home() {
                 school: '',
                 city: '',
                 subject: '',
-                experience: ''
+                experience: '',
+                workshopSpot: ''
               });
               
               setTimeout(() => setShowConfetti(false), 3000);
@@ -355,7 +371,7 @@ export default function Home() {
                     { icon: Calendar, label: 'DATE', value: 'June 14, 2026' },
                     { icon: Clock, label: 'TIME', value: '11:00 PM' },
                     { icon: Timer, label: 'DURATION', value: '3+ Hours' },
-                    { icon: Video, label: 'PLATFORM', value: 'Zoom' }
+                    { icon: Video, label: 'PLATFORM', value: 'Offline' }
                   ].map((item, i) => {
                     const Icon = item.icon;
                     return (
@@ -373,13 +389,43 @@ export default function Home() {
                   })}
                 </div>
 
-                {/* Price Tag */}
-                <div className="inline-block bg-gray-800/80 backdrop-blur-sm border-2 border-yellow-400 rounded-2xl px-10 py-6 mb-8">
-                  <p className="text-gray-400 line-through text-lg font-space-grotesk">₹1,487</p>
-                  <p className="text-6xl md:text-7xl font-black bg-gradient-to-r from-yellow-400 to-yellow-500 bg-clip-text text-transparent font-orbitron">
-                    ₹99
-                  </p>
-                  <p className="text-blue-400 font-bold text-sm font-space-grotesk mt-2">LIMITED TIME OFFER! 🚀</p>
+                {/* Workshop Spot Selector */}
+                <div className="bg-gray-800/80 backdrop-blur-sm border-2 border-yellow-400/30 rounded-2xl p-6 mb-8">
+                  <label className="flex items-center gap-2 text-gray-300 text-sm font-medium mb-4 font-space-grotesk">
+                    <Sparkles size={16} className="text-yellow-400" />
+                    Choose Your Workshop Spot
+                  </label>
+                  <div className="space-y-3">
+                    {workshopSpots.map((spot) => (
+                      <label
+                        key={spot.id}
+                        className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-all ${
+                          formData.workshopSpot === spot.id
+                            ? 'border-yellow-400 bg-yellow-400/10'
+                            : 'border-gray-600 bg-gray-700/30 hover:border-yellow-400/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="workshopSpot"
+                            value={spot.id}
+                            checked={formData.workshopSpot === spot.id}
+                            onChange={(e) => setFormData({ ...formData, workshopSpot: e.target.value })}
+                            className="w-4 h-4 accent-yellow-400"
+                          />
+                          <span className="text-white text-sm font-space-grotesk">{spot.label}</span>
+                        </div>
+                        <span className="text-yellow-400 font-bold font-orbitron">₹{spot.price}/-</span>
+                      </label>
+                    ))}
+                  </div>
+                  {formData.workshopSpot && (
+                    <div className="mt-4 text-center">
+                      <span className="text-gray-400 text-sm font-space-grotesk">Selected: </span>
+                      <span className="text-green-400 font-bold text-lg font-orbitron">₹{getWorkshopPrice()}/-</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* CTA Button */}
@@ -844,7 +890,7 @@ export default function Home() {
               <div className="md:col-span-2">
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !formData.workshopSpot}
                   className="w-full p-4 font-black bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 rounded-xl hover:shadow-2xl hover:shadow-yellow-400/50 transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed font-orbitron tracking-wider border-2 border-yellow-300 text-lg"
                 >
                   {isSubmitting ? (
@@ -853,7 +899,7 @@ export default function Home() {
                       PROCESSING...
                     </span>
                   ) : (
-                    'PAY ₹99 & REGISTER NOW 🚀'
+                    formData.workshopSpot ? `PAY ₹${getWorkshopPrice()} & REGISTER NOW` : 'SELECT WORKSHOP SPOT FIRST'
                   )}
                 </button>
               </div>
